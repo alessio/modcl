@@ -50,7 +50,11 @@ func main() {
 	case "init":
 		initChangesDir(changesDir)
 	case "generate":
-		generateChangelog(changesDir)
+		version := "UNRELEASED"
+		if flag.NArg() > 2 {
+			version = strings.Join(flag.Args()[2:], " ")
+		}
+		generateChangelog(changesDir, version)
 	default:
 		unknownCommand(cmd)
 	}
@@ -65,9 +69,9 @@ func initChangesDir(changesDir string) {
 		log.Fatalf("directory %q already exists", changesDir)
 	}
 
-	for _, section := range sections {
-		for _, stanza := range stanzas {
-			path := filepath.Join(changesDir, section, stanza)
+	for sectionDir := range sections {
+		for stanzaDir := range stanzas {
+			path := filepath.Join(changesDir, sectionDir, stanzaDir)
 			if err := os.MkdirAll(path, 0755); err != nil {
 				log.Fatal(err)
 			}
@@ -77,8 +81,8 @@ func initChangesDir(changesDir string) {
 	}
 }
 
-func generateChangelog(changesDir string) {
-	fmt.Printf("# UNRELEASED\n\n")
+func generateChangelog(changesDir, version string) {
+	fmt.Printf("# %s\n\n", version)
 	for sectionDir, sectionTitle := range sections {
 
 		fmt.Printf("## %s\n\n", sectionTitle)
