@@ -51,6 +51,8 @@ func main() {
 		initChangesDir(changesDir)
 	case "generate":
 		generateChangelog(changesDir)
+	default:
+		unknownCommand(cmd)
 	}
 }
 
@@ -143,10 +145,6 @@ Commands:
 
 func errInsufficientArgs() {
 	log.Fatalf("insufficient arguments\nTry '%s -help' for more information.", progName)
-}
-
-func errTooManyArgs() {
-	log.Fatalf("too many arguments\nTry '%s -help' for more information.", progName)
 }
 
 func unknownCommand(cmd string) {
