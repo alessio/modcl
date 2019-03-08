@@ -137,7 +137,7 @@ Commands:
                                   Markdown format and print it
                                   to stdout.
 `, progName)
-	fmt.Fprintf(os.Stderr, "%s\n", usageText)
+	fmt.Fprintf(os.Stderr, "%s", usageText)
 	//flag.PrintDefaults()
 }
 
