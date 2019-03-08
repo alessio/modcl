@@ -47,14 +47,26 @@ func main() {
 	changesDir := flag.Arg(0)
 	cmd := flag.Arg(1)
 	switch cmd {
+
 	case "init":
 		initChangesDir(changesDir)
+
+	case "add":
+		if flag.NArg() < 4 {
+			errInsufficientArgs()
+		}
+		if flag.NArg() > 4 {
+			errTooManyArgs()
+		}
+		addEntryFile(changesDir, flag.Arg(2), flag.Arg(3))
+
 	case "generate":
 		version := "UNRELEASED"
 		if flag.NArg() > 2 {
 			version = strings.Join(flag.Args()[2:], " ")
 		}
 		generateChangelog(changesDir, version)
+
 	default:
 		unknownCommand(cmd)
 	}
@@ -79,6 +91,39 @@ func initChangesDir(changesDir string) {
 			os.Create(filepath.Join(path, ".stamp"))
 		}
 	}
+}
+
+func addEntryFile(changesDir, sectionDir, stanzaDir string) {
+	if _, ok := sections[sectionDir]; !ok {
+		log.Fatalf("invalid section -- %s", sectionDir)
+	}
+	if _, ok := stanzas[stanzaDir]; !ok {
+		log.Fatalf("invalid stanza -- %s", stanzaDir)
+	}
+
+	bs, err := ioutil.ReadAll(os.Stdin)
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+
+	filename := generateFileName(strings.Split(string(bs), "\n")[0])
+	filepath := filepath.Join(changesDir, sectionDir, stanzaDir, filename)
+	outFile, err := os.OpenFile(filepath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer outFile.Close()
+
+	if _, err := outFile.Write(bs); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Fprintf(os.Stderr, "Written to %s\n", filepath)
+}
+
+func generateFileName(line string) string {
+	runesReplacer := strings.NewReplacer("[", "", "]", "", "#", "", `\`, "", ",", "", ".", "", ";", "", " ", "-")
+	return runesReplacer.Replace(strings.TrimSpace(line))
 }
 
 func generateChangelog(changesDir, version string) {
@@ -139,17 +184,32 @@ func printUsage() {
 
 Commands:
     init
+    add SECTION STANZA            Add an entry file.
+                                  Read from stdin until it
+                                  encounters EOF.
     generate [VERSION]            Generate a changelog in
                                   Markdown format and print it
                                   to stdout. VERSION defaults
                                   to UNRELEASED.
+
+    Sections             Stanzas
+         ---                 ---
+    breaking                gaia
+    features             gaiacli
+improvements            gaiarest
+    bugfixes                 sdk
+                      tendermint
 `, progName)
-	fmt.Fprintf(os.Stderr, "%s", usageText)
+	fmt.Fprintf(os.Stderr, "%s\n", usageText)
 	//flag.PrintDefaults()
 }
 
 func errInsufficientArgs() {
 	log.Fatalf("insufficient arguments\nTry '%s -help' for more information.", progName)
+}
+
+func errTooManyArgs() {
+	log.Fatalf("too many arguments\nTry '%s -help' for more information.", progName)
 }
 
 func unknownCommand(cmd string) {
