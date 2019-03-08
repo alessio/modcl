@@ -139,9 +139,10 @@ func printUsage() {
 
 Commands:
     init
-    generate VERSION              Generate a changelog in
+    generate [VERSION]            Generate a changelog in
                                   Markdown format and print it
-                                  to stdout.
+                                  to stdout. VERSION defaults
+                                  to UNRELEASED.
 `, progName)
 	fmt.Fprintf(os.Stderr, "%s", usageText)
 	//flag.PrintDefaults()
